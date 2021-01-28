@@ -6,13 +6,25 @@ from keras.layers import Dense, Dropout, Conv2D, Input, Lambda, MaxPooling2D, Up
 from keras import Model
 
 
-## Classes :
+
 class Game:
+    """
+        Classe réprésentant le plateau de jeu et les différentes actions possibles
+        pour les joueurs
+    """
     def __init__(self):
+        # Réprésentation naturelle du plateau de jeu -> 0: case vide, 1: jeton joueur 1, -1: jeton joueur 2
         self.board = np.zeros((4, 4, 4))
+
+        # Réprésentation binaire des positions des jetons du premier joueur
+        # (ça permet de vérifier rapidement s'il y a un puissance 4)
         self.binboard_j1 = 0
+        # De même pour le deuxième joueur
         self.binboard_j2 = 0
+
+        # Nombre de jetons sur le plateau (2 joueurs confondus)
         self.ntok = 0
+
         self.free_positions = []
         # On définit les indices de décalage pour check s'il y a un puissance 4
         self.deltas = np.array([1, 4, 5, 6, 19, 20, 21, 24, 25, 26, 29, 30, 31], dtype=object)
@@ -20,8 +32,14 @@ class Game:
         for i in range(16):
             pos = (i//4) * 10 + (i % 4)
             self.free_positions.append(pos)
+        # free_positions code les positions libre (x, y) pour ajouter un jetons sur le plateau
+        # (une position devient non disponible une fois que la colonne correspondante est remplie)
+
 
     def display_board(self):
+        """
+            Fonction utilitaire pour afficher le plateau de jeu
+        """
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
         ax.axes.set_xlim3d(left=0.2, right=2.8)
@@ -41,6 +59,9 @@ class Game:
         return None
 
     def __add_token(self, pos):
+        """
+            Cf self.add_token
+        """
         _x, _y = pos // 10, pos % 10
         if self.ntok % 2 == 0:
             _player = 1
@@ -65,7 +86,21 @@ class Game:
             raise ValueError('Colonne remplie')
         return None
 
+
     def add_tokens(self, *args):
+        """
+            Fonction pour ajouter un (ou des) jeton(s) au plateau
+            (en alternant entre les joueurs):
+
+            > g = Game()
+            # Crée un plateau vide
+            > g.add_token(11)
+            # Ajoute un jeton pour le joueur 1 dans la colonne (1, 1)
+            > add_token(12, 21, 23)
+            # Ajoute un jeton pour le joueur 2 en (1, 2)
+            # Puis un autre jeton pour le joueur 1 en (2, 1)
+            # Puis un autre jeton pour le joueur 2 en (2, 3)
+        """
         for pos in args:
             self.__add_token(pos)
         return None
@@ -74,9 +109,17 @@ class Game:
         return self.ntok
 
     def end_game(self):
+        """
+        Détermine si le plateau est rempli
+        :return: boolean
+        """
         return self.ntok == 64
 
     def clear_board(self):
+        """
+        Vide le plateau
+        :return: None
+        """
         self.board = np.zeros((4, 4, 4))
         self.binboard_j1 = 0
         self.binboard_j2 = 0
@@ -87,25 +130,25 @@ class Game:
             self.free_positions.append(pos)
 
     def check_connect4(self, show=True):
-        # print(type(self.binboard_j1), self.binboard_j1)
-        # print(type(self.binboard_j2), self.binboard_j2)
-        # print(self.deltas, self.deltas.dtype)
+        """
+        Cheack s'il y a puissance 4
+        :param show: Paramètre d'affichage
+        :return: boolean
+        """
         bb1 = self.binboard_j1 & (self.binboard_j1 >> self.deltas)
         bb2 = self.binboard_j2 & (self.binboard_j2 >> self.deltas)
         if show:
             print('Joueur 1 :', bool((bb1 & (bb1 >> self.deltas2)).any()))
             print('Joueur 2 :', bool((bb2 & (bb2 >> self.deltas2)).any()))
-            # print(bb1 & (bb1 >> self.deltas2))
-            # print(bb2 & (bb2 >> self.deltas2))
-            # print(type(bb1), type((bb1 >> self.deltas2)), (bb1 & (bb1 >> self.deltas2)).dtype)
-            # print(type(bb2), type((bb2 >> self.deltas2)), (bb2 & (bb2 >> self.deltas2)).dtype)
-            # print()
         else:
             return (bb1 & (bb1 >> self.deltas2)).any() | (bb2 & (bb2 >> self.deltas2)).any()
 
 
 ## Random player
 class Player:
+    """
+        Dummy player 1
+    """
     def __init__(self, _game, name=None):
         self.game = _game
         if name:

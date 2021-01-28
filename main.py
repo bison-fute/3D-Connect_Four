@@ -9,6 +9,8 @@ from keras.layers import Dense, Conv3D, MaxPooling3D, Input, Softmax
 
 
 ##
+
+# Exemple de début de jeu, avec affichage du plateau
 game = Game()
 game.add_tokens(11, 12, 12, 11)
 game.display_board()
@@ -18,6 +20,8 @@ p1 = Player(game)
 p2 = Player(game, 'Dean')
 
 ##
+
+# Quelques débuts de parties s'arrêtant au tour 10, avec vérification de puissance 4
 for k in range(5):
     game.clear_board()
     for i in range(10):
@@ -28,58 +32,7 @@ for k in range(5):
 
 ##
 
-pool_b = []
-pool_arr = []
-
-for k in range(10000):
-    pool_arr.append(npr.randint(2, size=(4, 4, 4), dtype='bool'))
-    bits = npr.randint(2, size=100)
-    a = 0
-    deux = 1
-    for bit in bits:
-        a += deux * int(bit)
-        deux *= 2
-    pool_b.append(a)
-
-
-## Temps bits
-
-tab = np.zeros(10000, dtype='bool')
-deltas = np.array([1, 4, 5, 6, 19, 20, 21, 24, 25, 26, 29, 30, 31])
-ddeltas = 2*deltas
-t0 = time.time()
-for i, b in enumerate(pool_b):
-    bb = b & (b >> deltas)
-    tab[i] |= (bb & (bb >> ddeltas)).any()
-print(time.time()-t0)
-
-## Temps np array
-tab = np.zeros(10000, dtype='bool')
-t0 = time.time()
-for i, b in enumerate(pool_arr):
-    # Les grandes diagonales
-    # tab[i] |= b[0, 0, 0] == b[1, 1, 1] == b[2, 2, 2] == b[3, 3, 3]
-    # tab[i] |= b[3, 0, 0] == b[2, 1, 1] == b[1, 2, 2] == b[0, 3, 3]
-    # tab[i] |= b[0, 3, 0] == b[1, 2, 1] == b[2, 1, 2] == b[3, 0, 3]
-    # tab[i] |= b[3, 3, 0] == b[2, 2, 1] == b[1, 1, 2] == b[0, 0, 3]
-
-    # tab[i] |= b[0, 0, 0] * b[1, 1, 1] * b[2, 2, 2] * b[3, 3, 3]
-    # tab[i] |= b[3, 0, 0] * b[2, 1, 1] * b[1, 2, 2] * b[0, 3, 3]
-    # tab[i] |= b[0, 3, 0] * b[1, 2, 1] * b[2, 1, 2] * b[3, 0, 3]
-    # tab[i] |= b[3, 3, 0] * b[2, 2, 1] * b[1, 1, 2] * b[0, 0, 3]
-
-    # # Les trucs droits
-    #
-    tab[i] |= b.all(axis=0).any()
-    tab[i] |= b.all(axis=1).any()
-    tab[i] |= b.all(axis=2).any()
-
-print(time.time()-t0)
-##
-
-
-##
-
+# Début de model, rien d'important
 input_board = Input(shape=(4, 4, 4, 1))
 
 x = Conv3D(8, (2, 2, 2), activation='relu', padding='same')(input_board)
