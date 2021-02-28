@@ -1,19 +1,25 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import numpy.random as npr
+from mpl_toolkits.mplot3d import Axes3D
 
 from keras.layers import Dense, Dropout, Conv2D, Input, Lambda, MaxPooling2D, UpSampling2D
 from keras import Model
 
 
-
 class Game:
     """
         Classe réprésentant le plateau de jeu et les différentes actions possibles
-        pour les joueurs
+        pour les joueurs.
+        Methods :  display_board(), __add_token(pos), add_tokens(), get_ntokens,
+                    end_game(), clear_board(), check_connect4(show)
     """
+
     def __init__(self):
-        # Réprésentation naturelle du plateau de jeu -> 0: case vide, 1: jeton joueur 1, -1: jeton joueur 2
+        # Réprésentation naturelle du plateau de jeu
+        # 0:    case vide,
+        # 1:    jeton joueur 1,
+        # -1:   jeton joueur 2
         self.board = np.zeros((4, 4, 4))
 
         # Réprésentation binaire des positions des jetons du premier joueur
@@ -28,33 +34,45 @@ class Game:
         self.free_positions = []
         # On définit les indices de décalage pour check s'il y a un puissance 4
         self.deltas = np.array([1, 4, 5, 6, 19, 20, 21, 24, 25, 26, 29, 30, 31], dtype=object)
-        self.deltas2 = 2*self.deltas                          # Pour économiser des calculs
+        self.deltas2 = 2 * self.deltas  # Pour économiser des calculs
         for i in range(16):
-            pos = (i//4) * 10 + (i % 4)
+            pos = (i // 4) * 10 + (i % 4)
             self.free_positions.append(pos)
         # free_positions code les positions libre (x, y) pour ajouter un jetons sur le plateau
         # (une position devient non disponible une fois que la colonne correspondante est remplie)
-
 
     def display_board(self):
         """
             Fonction utilitaire pour afficher le plateau de jeu
         """
         fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
+        ax = fig.gca(projection='3d')
         ax.axes.set_xlim3d(left=0.2, right=2.8)
         ax.axes.set_ylim3d(bottom=0.2, top=2.8)
         ax.axes.set_zlim3d(bottom=0.2, top=2.8)
         ax.set_xticks([0, 1, 2, 3])
         ax.set_yticks([0, 1, 2, 3])
         ax.set_zticks([0, 1, 2, 3])
+
+        # plot des colonnes verticales sur lesquelles s'insèrent les jetons
+        for i in range(4):
+            for j in range(4):
+                x = [i, i]
+                y = [j, j]
+                z = [0-0.15, 3-0.15]
+                ax.plot(x, y, z, c='saddlebrown', linewidth = 6,
+                        alpha = 0.3, zorder =1)
+
         for i in range(4):
             for j in range(4):
                 for k in range(4):
                     if self.board[i, j, k] == 1:
-                        ax.scatter(i, j, k, c='yellow', s=100)
+                        ax.scatter(i, j, k, c='gold', s=200, zorder =2)
                     if self.board[i, j, k] == -1:
-                        ax.scatter(i, j, k, c='red', s=100)
+                        ax.scatter(i, j, k, c='firebrick', s=200, zorder =2)
+        ax.grid(False)
+        ax.xaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+        ax.yaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
         plt.show()
         return None
 
@@ -73,19 +91,18 @@ class Game:
             _z += 1
             if _z == 4:
                 break
-        if _z < 4:          # Ajout du jeton
+        if _z < 4:  # Ajout du jeton
             self.board[_x, _y, _z] = _player
             if _player == 1:
-                self.binboard_j1 += 2**(_x + 5*_y + 25*_z)
+                self.binboard_j1 += 2 ** (_x + 5 * _y + 25 * _z)
             else:
-                self.binboard_j2 += 2**(_x + 5*_y + 25*_z)
+                self.binboard_j2 += 2 ** (_x + 5 * _y + 25 * _z)
             self.ntok += 1
             if _z == 3:
                 self.free_positions.remove(pos)
         else:
             raise ValueError('Colonne remplie')
         return None
-
 
     def add_tokens(self, *args):
         """
@@ -126,7 +143,7 @@ class Game:
         self.ntok = 0
         self.free_positions = []
         for i in range(16):
-            pos = (i//4) * 10 + (i % 4)
+            pos = (i // 4) * 10 + (i % 4)
             self.free_positions.append(pos)
 
     def check_connect4(self, show=True):
@@ -144,11 +161,13 @@ class Game:
             return (bb1 & (bb1 >> self.deltas2)).any() | (bb2 & (bb2 >> self.deltas2)).any()
 
 
-## Random player
+# Random player
 class Player:
     """
         Dummy player 1
+        Methods : play()
     """
+
     def __init__(self, _game, name=None):
         self.game = _game
         if name:
@@ -157,7 +176,7 @@ class Player:
             self.name = 'Todd'
         print(self.name, 'is ready to play')
 
-    def play(self):                 # Random
+    def play(self):  # Random
         if self.game.end_game():
             raise ValueError('Partie finie')
         k = npr.randint(len(self.game.free_positions))
@@ -169,5 +188,5 @@ class Player:
 Idées : faire des convolutions sur les 54 structures 1D et / ou
 sur les 48 structures 2D
 (En tout cas les convolutions normales sembles 
-moins pertienentes... sauf pour le centre)
+moins pertinentes... sauf pour le centre)
 """
